@@ -1,0 +1,28 @@
+{
+  "name": "demo-web-shop-automation",
+  "version": "1.0.0",
+  "description": "UI automation (Playwright + POM) for demowebshop.tricentis.com and API automation (Postman/Newman) for jsonplaceholder",
+  "private": true,
+  "scripts": {
+    "test": "node scripts/run.js ui",
+    "test:q1": "node scripts/run.js q1",
+    "test:q2": "node scripts/run.js q2",
+    "test:q3": "node scripts/run.js q3",
+    "test:api": "node scripts/run.js api",
+    "test:all": "node scripts/run.js all",
+    "test:headed": "node scripts/run.js ui --headed",
+    "report:html": "playwright show-report",
+    "report:allure:generate": "allure generate allure-results --clean -o allure-report",
+    "report:allure:open": "allure open allure-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@types/node": "^20.14.0",
+    "allure-commandline": "^2.30.0",
+    "allure-playwright": "^3.0.5",
+    "newman": "^4.6.1",
+    "newman-reporter-allure": "^3.14.0",
+    "newman-reporter-html": "^1.0.5",
+    "typescript": "^5.5.0"
+  }
+}
