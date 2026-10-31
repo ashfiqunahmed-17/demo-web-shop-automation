@@ -1,0 +1,40 @@
+name: Run UI and API test suites
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4   # Allure CLI needs Java
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      # UI (Q1, Q2, Q3 in sequence) + API, then the Allure report is built
+      - run: npm run test:all
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reports
+          path: |
+            playwright-report/
+            allure-report/
+            api-tests/reports/
+          retention-days: 14
