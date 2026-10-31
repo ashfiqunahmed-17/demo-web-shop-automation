@@ -1,0 +1,174 @@
+{
+  "info": {
+    "name": "DemoShop API Tests - jsonplaceholder users",
+    "description": "GET all users -> validate -> save an id -> PUT /users/{id} with dynamic data -> validate. Run with Newman.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://jsonplaceholder.typicode.com"
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "originalUser",
+      "value": ""
+    },
+    {
+      "key": "putBody",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1 - GET all users",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const users = pm.response.json();",
+              "",
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response is a non-empty array', function () {",
+              "    pm.expect(users).to.be.an('array');",
+              "    pm.expect(users.length).to.be.above(0);",
+              "});",
+              "",
+              "pm.test('Response contains user information', function () {",
+              "    users.forEach(function (user) {",
+              "        pm.expect(user).to.be.an('object');",
+              "        pm.expect(Object.keys(user).length).to.be.above(0);",
+              "    });",
+              "});",
+              "",
+              "pm.test('Each user has an id, name and email', function () {",
+              "    users.forEach(function (user) {",
+              "        pm.expect(user).to.have.property('id');",
+              "        pm.expect(user.name, 'name of user ' + user.id).to.be.a('string').and.not.empty;",
+              "        pm.expect(user.email, 'email of user ' + user.id).to.be.a('string').and.not.empty;",
+              "    });",
+              "});",
+              "",
+              "// Step 2: pick any one user and save its ID (and the full original user) in variables",
+              "const picked = users[Math.floor(Math.random() * users.length)];",
+              "pm.collectionVariables.set('userId', picked.id);",
+              "pm.collectionVariables.set('originalUser', JSON.stringify(picked));",
+              "console.log('Saved userId = ' + picked.id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2 - PUT update user (name, email, company.name)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Step 4: build the PUT body from the ORIGINAL user, changing ONLY name, email and company.name.",
+              "// Everything else (phone, address, ...) is sent back unchanged.",
+              "const original = JSON.parse(pm.collectionVariables.get('originalUser'));",
+              "const runId = Date.now();",
+              "const updated = JSON.parse(JSON.stringify(original));",
+              "updated.name = 'QA Updated ' + runId;",
+              "updated.email = 'qa.updated.' + runId + '@example.com';",
+              "updated.company = Object.assign({}, original.company, { name: 'Updated Co ' + runId });",
+              "",
+              "pm.collectionVariables.set('updatedName', updated.name);",
+              "pm.collectionVariables.set('updatedEmail', updated.email);",
+              "pm.collectionVariables.set('updatedCompany', updated.company.name);",
+              "pm.collectionVariables.set('putBody', JSON.stringify(updated));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "const savedId = parseInt(pm.collectionVariables.get('userId'), 10);",
+              "",
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Returned ID is the same as the ID stored in the variable', function () {",
+              "    pm.expect(body.id).to.eql(savedId);",
+              "});",
+              "",
+              "pm.test('Phone is not empty', function () {",
+              "    pm.expect(body.phone).to.be.a('string').and.not.empty;",
+              "});",
+              "",
+              "pm.test('Returned name matches the updated name', function () {",
+              "    pm.expect(body.name).to.eql(pm.collectionVariables.get('updatedName'));",
+              "});",
+              "",
+              "pm.test('Returned email and company.name match the updated values', function () {",
+              "    pm.expect(body.email).to.eql(pm.collectionVariables.get('updatedEmail'));",
+              "    pm.expect(body.company.name).to.eql(pm.collectionVariables.get('updatedCompany'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{{putBody}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/users/{{userId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users",
+            "{{userId}}"
+          ]
+        }
+      }
+    }
+  ]
+}
